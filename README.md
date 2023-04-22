@@ -1,6 +1,10 @@
 # Проект RSS-агрегатор
+
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/AlexanderRyzhov/frontend-project-11/workflows/hexlet-check/badge.svg)](https://github.com/AlexanderRyzhov/frontend-project-11/actions)
+
+### My check (Github Actions):
+[![my-check](https://github.com/AlexanderRyzhov/frontend-project-11/actions/workflows/my-check.yml/badge.svg)](https://github.com/AlexanderRyzhov/frontend-project-11/actions/workflows/my-check.yml)
 
 ### CodeClimate statumake tests:
 [![Maintainability](https://api.codeclimate.com/v1/badges/bd57915773c192c8baff/maintainability)](https://codeclimate.com/github/AlexanderRyzhov/frontend-project-11/maintainability)
