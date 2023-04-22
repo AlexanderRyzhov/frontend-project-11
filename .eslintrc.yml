@@ -13,3 +13,7 @@ rules:
     - error
     - ignorePackages
     - js: always
+  import/no-extraneous-dependencies:
+    - error
+    - devDependencies:
+      "webpack.config.js"
