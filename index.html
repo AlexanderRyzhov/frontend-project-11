@@ -8,12 +8,13 @@
   <body>
     <form data-form="add-feed" method="post">
       <div class="input-group mb-3">
-        <input type="text" class="form-control" placeholder="введите url" aria-label="URL RSS-фида" aria-describedby="basic-addon2">
-        <div class="input-group-append">
-          <button class="btn btn-primary" type="button">Добавить</button>
+        <input type="text" autofocus requiered class="form-control" placeholder="введите url" aria-label="URL RSS-фида">
+        <button class="btn btn-primary" type="submit">Добавить</button>
+        <div id="validationServerUsernameFeedback" class="invalid-feedback">
+          Error
         </div>
       </div>
     </form>
-    <script src="./main.js"></script>
+    <script src="./index.js"></script>
   </body>
 </html>

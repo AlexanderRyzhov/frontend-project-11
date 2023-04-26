@@ -7,15 +7,15 @@ const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
 const isProduction = process.env.NODE_ENV === 'production';
 
 const config = {
-  entry: './src/js/main.js',
+  entry: './src/index.js',
   output: {
-    filename: 'main.js',
+    filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
   },
   devServer: {
     static: path.resolve(__dirname, 'dist'),
     port: 8080,
-    hot: true
+    hot: true,
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -35,25 +35,25 @@ const config = {
         test: /\.(scss)$/,
         use: [
           {
-            loader: 'style-loader'
+            loader: 'style-loader',
           },
           {
-            loader: 'css-loader'
+            loader: 'css-loader',
           },
           {
             loader: 'postcss-loader',
             options: {
               postcssOptions: {
                 plugins: () => [
-                  require('autoprefixer')
-                ]
-              }
-            }
+                  require('autoprefixer'),
+                ],
+              },
+            },
           },
           {
-            loader: 'sass-loader'
-          }
-        ]
+            loader: 'sass-loader',
+          },
+        ],
       },
       // Add your rules for custom modules here
       // Learn more about loaders from https://webpack.js.org/loaders/
