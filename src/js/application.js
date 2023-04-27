@@ -1,17 +1,36 @@
 import onChange from 'on-change';
 import * as yup from 'yup';
+import i18next from 'i18next';
 
+import ru from './locales/ru.js';
 import render from './view.js';
 
-// const urlSchema = yup.string().url();
+const init = async () => {
+  i18next.init({
+    lng: 'ru',
+    debug: true,
+    resources: {
+      ru,
+    },
+  }).then(() => {
+    yup.setLocale({
+      mixed: {
+        required: i18next.t('forms.validation.required'),
+        notOneOf: i18next.t('forms.validation.notUnique'),
+      },
+      string: {
+        url: i18next.t('forms.validation.url'),
+      },
+    });
+  });
+};
+
 const validate = async (url, state) => {
-  const urlSchema = yup.string()
-    .url('введите валидный URL')
-    .notOneOf(state.urls, 'Данный URL уже присутствует в списке');
+  const urlSchema = yup.string().required().url().notOneOf(state.urls);
   return urlSchema.validate(url, { abortEarly: false });
 };
 
-export default () => {
+const app = () => {
   // Model
   const state = {
     currentUrl: '',
@@ -21,7 +40,10 @@ export default () => {
   };
 
   // View
-  const watchedState = onChange(state, render);
+  const watchedState = onChange(
+    state,
+    (path, current, previous) => (render(watchedState, path, current, previous)),
+  );
 
   // Controller
   const form = document.querySelector('form');
@@ -29,6 +51,7 @@ export default () => {
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+
     event.stopImmediatePropagation();
     const { value } = inputElement;
     watchedState.currentUrl = value;
@@ -44,4 +67,9 @@ export default () => {
         [watchedState.error] = error.errors;
       });
   });
+};
+
+export default () => {
+  init()
+    .then(() => app());
 };

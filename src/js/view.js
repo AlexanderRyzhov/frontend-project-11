@@ -1,4 +1,4 @@
-const render = (path, value) => {
+const render = (state, path, value) => {
   const inputElement = document.querySelector('input');
   const errorElement = document.querySelector('.invalid-feedback');
 
