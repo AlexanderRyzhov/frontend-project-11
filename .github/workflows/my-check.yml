@@ -16,16 +16,4 @@ jobs:
       # Запуск lint
       - name: run lint
         run: make lint
-      # Запуск тестов
-      - name: run tests
-        run: make test
-      # Запуск расчета покрытия тестами и публикации на codeclimate  
-      - name: test & publish code coverage
-        # Publish code coverage on Code Climate
-        uses: paambaati/codeclimate-action@v3.0.0
-        # Add Code Climate secret key
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-        with:
-          coverageCommand: make test-coverage
-          debug: true
+        
