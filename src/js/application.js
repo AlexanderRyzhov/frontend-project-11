@@ -2,6 +2,7 @@ import onChange from 'on-change';
 import * as yup from 'yup';
 import i18next from 'i18next';
 import axios from 'axios';
+import * as _ from 'lodash';
 
 import ru from './locales/ru.js';
 import render from './view.js';
@@ -35,22 +36,44 @@ const parseFeed = (contents) => {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(contents, 'text/xml');
   console.log(xmlDoc);
-  const title = xmlDoc.querySelector('channel > title').textContent;
-  const description = xmlDoc.querySelector('channel > description').textContent;
-  const feed = { title, description };
+  const feedTitle = xmlDoc.querySelector('channel > title').textContent;
+  const feedDescription = xmlDoc.querySelector('channel > description').textContent;
+  const feed = { title: feedTitle, description: feedDescription };
   const postElements = xmlDoc.querySelectorAll('item');
   const posts = [...postElements].map((element) => {
-    const postTitle = element.querySelector('title').textContent;
-    const postDescription = element.querySelector('description').textContent;
-    const postLink = element.querySelector('link').textContent;
+    const title = element.querySelector('title').textContent;
+    const description = element.querySelector('description').textContent;
+    const link = element.querySelector('link').textContent;
+    const guid = element.querySelector('guid').textContent;
     const post = {
-      title: postTitle,
-      description: postDescription,
-      link: postLink,
+      title,
+      description,
+      link,
+      guid,
     };
     return post;
   });
   return { feed, posts };
+};
+
+const addNewPosts = (posts, state) => {
+  const newPosts = posts.filter((post) => (_.findIndex(state.data.posts, { guid: post.guid }) < 0));
+  if (newPosts.length > 0) {
+    state.data.posts = [...state.data.posts, ...newPosts]; // eslint-disable-line no-param-reassign
+  }
+};
+
+const checkFeedsUpdate = (state) => {
+  const promises = state.data.feeds
+    .map((feed) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(feed.url)}`)
+      .then((response) => {
+        const { posts } = parseFeed(response.data.contents);
+        addNewPosts(posts, state);
+      })
+      .catch((error) => {
+        console.log(error);
+      }));
+  return Promise.all(promises);
 };
 
 const app = () => {
@@ -91,11 +114,10 @@ const app = () => {
           .then((response) => {
           // handle success
             const { feed, posts } = parseFeed(response.data.contents);
-            console.log(feed);
-            console.log(posts);
+            feed.url = watchedState.data.currentUrl;
             watchedState.data.urls = [...watchedState.data.urls, value];
             watchedState.data.feeds = [...watchedState.data.feeds, feed];
-            watchedState.data.posts = [...watchedState.data.posts, ...posts];
+            addNewPosts(posts, watchedState);
             watchedState.data.currentUrl = '';
             watchedState.status = 'ready';
           })
@@ -119,6 +141,14 @@ const app = () => {
         [watchedState.error] = error.errors;
       });
   });
+
+  const fetchFeeds = () => {
+    console.log('checkFeedsUpdate');
+    checkFeedsUpdate(watchedState)
+      .then(() => setTimeout(fetchFeeds, 5000));
+  };
+
+  setTimeout(fetchFeeds, 5000);
 };
 
 export default () => {
