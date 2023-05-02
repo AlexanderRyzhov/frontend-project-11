@@ -1,8 +1,8 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>[dev] RSS-агрегатор</title>
   </head>
   <body>
@@ -11,24 +11,63 @@
         <h1>RSS-агрегатор</h1>
         <form data-form="add-feed" method="post">
           <div class="input-group mb-3">
-            <input type="text" autofocus requiered class="form-control" placeholder="введите url" aria-label="URL RSS-фида">
-            <button id="addbutton" class="btn btn-primary" type="submit">Добавить</button>
+            <input
+              type="text"
+              autofocus
+              requiered
+              class="form-control"
+              placeholder="введите url"
+              aria-label="URL RSS-фида"
+            />
+            <button id="addbutton" class="btn btn-primary" type="submit">
+              Добавить
+            </button>
             <div id="validationServerUsernameFeedback" class="invalid-feedback">
               Error
             </div>
           </div>
           <span>Пример: https://lorem-rss.hexlet.app/feed</span>
-        </form>      
+        </form>
       </section>
       <section class="container-fluid p-5">
         <div class="row">
-          <div id="posts" class="col-md-8 themed-grid-col">
+          <div id="posts" class="col-md-8 themed-grid-col"></div>
+          <div id="feeds" class="col-md-4 themed-grid-col"></div>
+        </div>
+      </section>
+    </main>
+    <!-- Modal window -->
+    <div
+      class="modal fade"
+      id="modal"
+      tabindex="-1"
+      aria-labelledby="modalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalLabel">New message</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
           </div>
-          <div id="feeds" class="col-md-4 themed-grid-col">
+          <div class="modal-body" id="modalDescription"></div>
+          <div class="modal-footer">
+            <a class="btn btn-primary" role="button" target="_blank" rel="noopener noreferrer" id="modalLink">Читать полностью... </a>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Закрыть
+            </button>
           </div>
         </div>
-      </section>      
-    </main>    
-    <!-- <script src="./index.js"></script> -->
+      </div>
+    </div>
   </body>
 </html>

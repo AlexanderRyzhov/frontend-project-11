@@ -84,6 +84,7 @@ const app = () => {
       urls: [],
       feeds: [],
       posts: [],
+      seenGuids: [],
     },
     error: null,
     status: '',
@@ -96,6 +97,15 @@ const app = () => {
   );
 
   // Controller
+  const exampleModal = document.querySelector('#modal');
+  exampleModal.addEventListener('show.bs.modal', (event) => {
+    const button = event.relatedTarget;
+    const guid = button.getAttribute('data-bs-guid');
+    if (!watchedState.data.seenGuids.includes(guid)) {
+      watchedState.data.seenGuids = [guid, ...watchedState.data.seenGuids];
+    }
+  });
+
   const form = document.querySelector('form');
   const inputElement = document.querySelector('input');
 

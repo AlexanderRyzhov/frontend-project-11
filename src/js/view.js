@@ -1,9 +1,12 @@
+import * as _ from 'lodash';
+
 const render = (state, path, value, _previous, i18next) => {
   const inputElement = document.querySelector('input');
   const addbuttonElement = document.querySelector('#addbutton');
   const errorElement = document.querySelector('.invalid-feedback');
   const feedsContainer = document.querySelector('#feeds');
   const postsContainer = document.querySelector('#posts');
+  const modal = document.querySelector('#modal');
 
   switch (path) {
     case 'data.currentUrl':
@@ -38,20 +41,41 @@ const render = (state, path, value, _previous, i18next) => {
       feedsContainer.replaceChildren(list);
       break;
     }
+    case 'data.seenGuids': {
+      console.log(`data.seenGuids = ${value}`);
+      const guid = value[0];
+      const post = _.find(state.data.posts, { guid });
+      const modalTitle = modal.querySelector('.modal-title');
+      const modalDescription = modal.querySelector('#modalDescription');
+      const modalLink = modal.querySelector('#modalLink');
+      modalTitle.textContent = post.title;
+      modalDescription.textContent = post.description;
+      modalLink.href = post.link;
+      // falls through
+    }
     case 'data.posts': {
-      const posts = value;
+      const { posts } = state.data;
       const list = document.createElement('ul');
+      list.classList.add('list-group');
       const elements = posts.map((post) => {
         const liElement = document.createElement('li');
         const aElement = document.createElement('a');
         const buttonElement = document.createElement('button');
         aElement.textContent = post.title;
         aElement.href = post.link;
+        if (state.data.seenGuids.includes(post.guid)) {
+          aElement.classList.add('fw-normal', 'link-secondary');
+        } else {
+          aElement.classList.add('fw-bold');
+        }
         aElement.setAttribute('target', '_blank');
         buttonElement.textContent = i18next.t('forms.viewButton');
-        buttonElement.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+        buttonElement.classList.add('btn', 'btn-primary', 'btn-sm');
+        buttonElement.setAttribute('data-bs-toggle', 'modal');
+        buttonElement.setAttribute('data-bs-target', '#modal');
+        buttonElement.setAttribute('data-bs-guid', post.guid);
         liElement.replaceChildren(aElement, buttonElement);
-        liElement.classList.add('justify-content-between', 'd-flex');
+        liElement.classList.add('justify-content-between', 'd-flex', 'list-group-item');
         return liElement;
       });
       list.replaceChildren(...elements);
