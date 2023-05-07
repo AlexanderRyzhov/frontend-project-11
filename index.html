@@ -12,6 +12,7 @@
         <form data-form="add-feed" method="post">
           <div class="input-group mb-3">
             <input
+              id="input"
               type="text"
               autofocus
               requiered
@@ -22,11 +23,10 @@
             <button id="addbutton" class="btn btn-primary" type="submit">
               Добавить
             </button>
-            <div id="validationServerUsernameFeedback" class="invalid-feedback">
-              Error
-            </div>
           </div>
           <span>Пример: https://lorem-rss.hexlet.app/feed</span>
+          <div id="feedback" class="text-success">
+          </div>
         </form>
       </section>
       <section class="container-fluid p-5">

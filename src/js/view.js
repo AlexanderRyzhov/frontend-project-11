@@ -1,9 +1,9 @@
 import * as _ from 'lodash';
 
 const render = (state, path, value, _previous, i18next) => {
-  const inputElement = document.querySelector('input');
+  const inputElement = document.querySelector('#input');
   const addbuttonElement = document.querySelector('#addbutton');
-  const errorElement = document.querySelector('.invalid-feedback');
+  const feedback = document.querySelector('#feedback');
   const feedsContainer = document.querySelector('#feeds');
   const postsContainer = document.querySelector('#posts');
   const modal = document.querySelector('#modal');
@@ -13,15 +13,7 @@ const render = (state, path, value, _previous, i18next) => {
       console.log(`currentUrl = ${value}`);
       inputElement.value = value;
       break;
-    case 'error':
-      console.log(`error = ${value}`);
-      if (value) {
-        inputElement.classList.add('is-invalid');
-        errorElement.textContent = value;
-      } else {
-        inputElement.classList.remove('is-invalid');
-        errorElement.textContent = '';
-      }
+    case 'feedback':
       break;
     case 'data.urls':
       break;
@@ -82,15 +74,29 @@ const render = (state, path, value, _previous, i18next) => {
       postsContainer.replaceChildren(list);
       break;
     }
-    case 'status':
-      if (value === 'sending') {
-        inputElement.setAttribute('readonly', 'true');
-        addbuttonElement.setAttribute('disabled', 'true');
-      } else {
-        inputElement.removeAttribute('readonly');
-        addbuttonElement.removeAttribute('disabled');
+    case 'status': {
+      const status = value;
+      feedback.textContent = state.feedback;
+      inputElement.classList.remove('is-invalid');
+      switch (status) {
+        case 'sending':
+          inputElement.setAttribute('readonly', 'true');
+          addbuttonElement.setAttribute('disabled', 'true');
+          feedback.classList.remove('text-danger');
+          break;
+        case 'error':
+          inputElement.classList.add('is-invalid');
+          feedback.classList.add('text-danger');
+          // fall through
+        case 'success':
+          inputElement.removeAttribute('readonly');
+          addbuttonElement.removeAttribute('disabled');
+          break;
+        default:
+          break;
       }
       break;
+    }
     default:
       throw new Error(`unexpected change path: ${path}`);
   }
