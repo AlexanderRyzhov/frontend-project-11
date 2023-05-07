@@ -143,7 +143,7 @@ const addFormListener = (watchedState) => {
     const url = inputElement.value;
     watchedState.data.currentUrl = url;
     validate(url, watchedState)
-      .then(() => loadFeed(url, watchedState))
+      .then(() => loadFeed(watchedState))
       .catch((error) => {
         [watchedState.feedback] = error.errors;
         watchedState.status = 'error';
