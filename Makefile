@@ -6,3 +6,6 @@ test-coverage:
 
 lint:
 	npx eslint .
+
+install:
+	npm ci
