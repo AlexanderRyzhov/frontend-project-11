@@ -147,7 +147,6 @@ const app = () => {
           });
       })
       .catch((error) => {
-        console.log(`set watchedState.error = ${error}`);
         [watchedState.feedback] = error.errors;
         watchedState.status = 'error';
       });
