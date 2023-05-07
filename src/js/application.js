@@ -104,6 +104,37 @@ const addModalListener = (watchedState) => {
   });
 };
 
+const loadFeed = (url, watchedState) => {
+  watchedState.feedback = i18next.t('forms.isLoading');
+  watchedState.status = 'sending';
+  axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(watchedState.data.currentUrl)}`)
+    .then((response) => {
+    // handle success
+      const { feed, posts } = parseFeed(response.data.contents);
+      feed.url = watchedState.data.currentUrl;
+      watchedState.data.urls = [...watchedState.data.urls, url];
+      watchedState.data.feeds = [...watchedState.data.feeds, feed];
+      addNewPosts(posts, watchedState);
+      watchedState.data.currentUrl = '';
+      watchedState.feedback = i18next.t('forms.success');
+      watchedState.status = 'success';
+    })
+    .catch((error) => {
+      console.log(error);
+      switch (error.name) {
+        case 'TypeError':
+          watchedState.feedback = i18next.t('errors.invalidXml');
+          break;
+        case 'AxiosError':
+          watchedState.feedback = i18next.t('errors.network');
+          break;
+        default:
+          watchedState.feedback = i18next.t('errors.unexpected');
+      }
+      watchedState.status = 'error';
+    });
+};
+
 const addFormListener = (watchedState) => {
   const form = document.querySelector('form');
   const inputElement = document.querySelector('input');
@@ -111,40 +142,10 @@ const addFormListener = (watchedState) => {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     event.stopImmediatePropagation();
-    const { value } = inputElement;
-    watchedState.data.currentUrl = value;
-    validate(value, watchedState)
-      .then(() => {
-        console.log(`valid currentUrl = ${value}`);
-        watchedState.feedback = i18next.t('forms.isLoading');
-        watchedState.status = 'sending';
-        axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(watchedState.data.currentUrl)}`)
-          .then((response) => {
-          // handle success
-            const { feed, posts } = parseFeed(response.data.contents);
-            feed.url = watchedState.data.currentUrl;
-            watchedState.data.urls = [...watchedState.data.urls, value];
-            watchedState.data.feeds = [...watchedState.data.feeds, feed];
-            addNewPosts(posts, watchedState);
-            watchedState.data.currentUrl = '';
-            watchedState.feedback = i18next.t('forms.success');
-            watchedState.status = 'success';
-          })
-          .catch((error) => {
-            console.log(error);
-            switch (error.name) {
-              case 'TypeError':
-                watchedState.feedback = i18next.t('errors.invalidXml');
-                break;
-              case 'AxiosError':
-                watchedState.feedback = i18next.t('errors.network');
-                break;
-              default:
-                watchedState.feedback = i18next.t('errors.unexpected');
-            }
-            watchedState.status = 'error';
-          });
-      })
+    const url = inputElement.value;
+    watchedState.data.currentUrl = url;
+    validate(url, watchedState)
+      .then(() => loadFeed(url, watchedState))
       .catch((error) => {
         [watchedState.feedback] = error.errors;
         watchedState.status = 'error';
