@@ -27,7 +27,7 @@ const renderModal = (guids, state, modal) => {
   modalLink.href = post.link;
 };
 
-const renderButton = (post, i18next) => {
+const createButton = (post, i18next) => {
   const button = document.createElement('button');
   button.textContent = i18next.t('forms.viewButton');
   button.classList.add('btn', 'btn-primary', 'btn-sm');
@@ -52,7 +52,7 @@ const renderPosts = (state, postsContainer, i18next) => {
       aElement.classList.add('fw-bold');
     }
     aElement.setAttribute('target', '_blank');
-    const buttonElement = renderButton(post, i18next);
+    const buttonElement = createButton(post, i18next);
     liElement.replaceChildren(aElement, buttonElement);
     liElement.classList.add('justify-content-between', 'd-flex', 'list-group-item');
     return liElement;

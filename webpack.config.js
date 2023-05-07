@@ -45,7 +45,9 @@ const config = {
             options: {
               postcssOptions: {
                 plugins: () => [
+                  /* eslint-disable global-require */
                   require('autoprefixer'),
+                  /* eslint-enable global-require */
                 ],
               },
             },
