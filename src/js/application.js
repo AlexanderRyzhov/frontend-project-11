@@ -104,15 +104,14 @@ const addModalListener = (watchedState) => {
   });
 };
 
-const loadFeed = (url, watchedState) => {
+const loadFeed = (watchedState) => {
   watchedState.feedback = i18next.t('forms.isLoading');
   watchedState.status = 'sending';
   axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(watchedState.data.currentUrl)}`)
     .then((response) => {
-    // handle success
       const { feed, posts } = parseFeed(response.data.contents);
       feed.url = watchedState.data.currentUrl;
-      watchedState.data.urls = [...watchedState.data.urls, url];
+      watchedState.data.urls = [...watchedState.data.urls, feed.url];
       watchedState.data.feeds = [...watchedState.data.feeds, feed];
       addNewPosts(posts, watchedState);
       watchedState.data.currentUrl = '';
@@ -120,7 +119,6 @@ const loadFeed = (url, watchedState) => {
       watchedState.status = 'success';
     })
     .catch((error) => {
-      console.log(error);
       switch (error.name) {
         case 'TypeError':
           watchedState.feedback = i18next.t('errors.invalidXml');
