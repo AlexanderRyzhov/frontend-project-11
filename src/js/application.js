@@ -76,8 +76,7 @@ const checkFeedsUpdate = (state) => {
   return Promise.all(promises);
 };
 
-const app = () => {
-  // Model
+const buildInitialState = () => {
   const state = {
     data: {
       currentUrl: '',
@@ -89,14 +88,12 @@ const app = () => {
     feedback: null,
     status: '',
   };
+  return state;
+};
 
-  // View
-  const watchedState = onChange(
-    state,
-    (path, current, previous) => (render(watchedState, path, current, previous, i18next)),
-  );
-
-  // Controller
+/* eslint no-param-reassign:
+["error", { "props": true, "ignorePropertyModificationsFor": ["watchedState"] }] */
+const addModalListener = (watchedState) => {
   const exampleModal = document.querySelector('#modal');
   exampleModal.addEventListener('show.bs.modal', (event) => {
     const button = event.relatedTarget;
@@ -105,7 +102,9 @@ const app = () => {
       watchedState.data.seenGuids = [guid, ...watchedState.data.seenGuids];
     }
   });
+};
 
+const addFormListener = (watchedState) => {
   const form = document.querySelector('form');
   const inputElement = document.querySelector('input');
 
@@ -151,13 +150,25 @@ const app = () => {
         watchedState.status = 'error';
       });
   });
+};
+
+const app = () => {
+  // Model
+  const state = buildInitialState();
+  // View
+  const watchedState = onChange(
+    state,
+    (path, current, previous) => (render(watchedState, path, current, previous, i18next)),
+  );
+  // Controller
+  addModalListener(watchedState);
+  addFormListener(watchedState);
 
   const fetchFeeds = () => {
     console.log('checkFeedsUpdate');
     checkFeedsUpdate(watchedState)
       .then(() => setTimeout(fetchFeeds, 5000));
   };
-
   setTimeout(fetchFeeds, 5000);
 };
 
