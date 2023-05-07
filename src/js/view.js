@@ -27,6 +27,16 @@ const renderModal = (guids, state, modal) => {
   modalLink.href = post.link;
 };
 
+const renderButton = (post, i18next) => {
+  const button = document.createElement('button');
+  button.textContent = i18next.t('forms.viewButton');
+  button.classList.add('btn', 'btn-primary', 'btn-sm');
+  button.setAttribute('data-bs-toggle', 'modal');
+  button.setAttribute('data-bs-target', '#modal');
+  button.setAttribute('data-bs-guid', post.guid);
+  return button;
+};
+
 const renderPosts = (state, postsContainer, i18next) => {
   const { posts } = state.data;
   const list = document.createElement('ul');
@@ -34,7 +44,6 @@ const renderPosts = (state, postsContainer, i18next) => {
   const elements = posts.map((post) => {
     const liElement = document.createElement('li');
     const aElement = document.createElement('a');
-    const buttonElement = document.createElement('button');
     aElement.textContent = post.title;
     aElement.href = post.link;
     if (state.data.seenGuids.includes(post.guid)) {
@@ -43,11 +52,7 @@ const renderPosts = (state, postsContainer, i18next) => {
       aElement.classList.add('fw-bold');
     }
     aElement.setAttribute('target', '_blank');
-    buttonElement.textContent = i18next.t('forms.viewButton');
-    buttonElement.classList.add('btn', 'btn-primary', 'btn-sm');
-    buttonElement.setAttribute('data-bs-toggle', 'modal');
-    buttonElement.setAttribute('data-bs-target', '#modal');
-    buttonElement.setAttribute('data-bs-guid', post.guid);
+    const buttonElement = renderButton(post, i18next);
     liElement.replaceChildren(aElement, buttonElement);
     liElement.classList.add('justify-content-between', 'd-flex', 'list-group-item');
     return liElement;
