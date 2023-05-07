@@ -85,7 +85,7 @@ const renderStatus = (status, state, ui) => {
   }
 };
 
-const render = (state, path, value, _previous, i18next) => {
+const buildUiRefs = () => {
   const ui = {
     inputElement: document.querySelector('#input'),
     addbuttonElement: document.querySelector('#addbutton'),
@@ -94,30 +94,30 @@ const render = (state, path, value, _previous, i18next) => {
     postsContainer: document.querySelector('#posts'),
     modal: document.querySelector('#modal'),
   };
+  return ui;
+};
+
+const render = (state, path, value, _previous, i18next) => {
+  const ui = buildUiRefs();
   switch (path) {
+    case 'feedback':
+    case 'data.urls':
+      break;
     case 'data.currentUrl':
       ui.inputElement.value = value;
       break;
-    case 'feedback':
-      break;
-    case 'data.urls':
-      break;
-    case 'data.feeds': {
+    case 'data.feeds':
       renderFeeds(value, ui.feedsContainer);
       break;
-    }
-    case 'data.seenGuids': {
+    case 'data.seenGuids':
       renderModal(value, state, ui.modal);
       // falls through
-    }
-    case 'data.posts': {
+    case 'data.posts':
       renderPosts(state, ui.postsContainer, i18next);
       break;
-    }
-    case 'status': {
+    case 'status':
       renderStatus(value, state, ui);
       break;
-    }
     default:
       throw new Error(`unexpected change path: ${path}`);
   }
