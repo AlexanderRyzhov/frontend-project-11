@@ -40,9 +40,14 @@ const addNewPosts = (posts, state) => {
   }
 };
 
+const httpGet = (url) => {
+  const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
+  return axios.get(proxyUrl);
+};
+
 const checkFeedsUpdate = (state) => {
   const promises = state.data.feeds
-    .map((feed) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(feed.url)}`)
+    .map((feed) => httpGet(feed.url)
       .then((response) => {
         const { posts } = parseFeed(response.data.contents);
         addNewPosts(posts, state);
@@ -143,7 +148,7 @@ const app = () => {
   const fetchFeeds = () => {
     console.log('checkFeedsUpdate');
     checkFeedsUpdate(watchedState)
-      .then(() => setTimeout(fetchFeeds, 5000));
+      .finally(() => setTimeout(fetchFeeds, 5000));
   };
   setTimeout(fetchFeeds, 5000);
 };
