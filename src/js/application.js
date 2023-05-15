@@ -73,6 +73,12 @@ const buildInitialState = () => {
   return state;
 };
 
+const markGuidSeen = (guid, watchedState) => {
+  if (!watchedState.data.seenGuids.includes(guid)) {
+    watchedState.data.seenGuids = [guid, ...watchedState.data.seenGuids];
+  }
+};
+
 /* eslint no-param-reassign:
 ["error", { "props": true, "ignorePropertyModificationsFor": ["watchedState"] }] */
 const addModalListener = (watchedState) => {
@@ -80,9 +86,19 @@ const addModalListener = (watchedState) => {
   exampleModal.addEventListener('show.bs.modal', (event) => {
     const button = event.relatedTarget;
     const guid = button.getAttribute('data-bs-guid');
-    if (!watchedState.data.seenGuids.includes(guid)) {
-      watchedState.data.seenGuids = [guid, ...watchedState.data.seenGuids];
-    }
+    markGuidSeen(guid, watchedState);
+  });
+};
+
+const addLinkClickListener = (watchedState) => {
+  const links = document.querySelectorAll('#posts>ul>li>a');
+  links.forEach((linkElement) => {
+    console.log(linkElement);
+    linkElement.addEventListener('click', () => {
+      const button = linkElement.nextSibling;
+      const guid = button.getAttribute('data-bs-guid');
+      markGuidSeen(guid, watchedState);
+    });
   });
 };
 
@@ -139,8 +155,12 @@ const app = () => {
   // View
   const watchedState = onChange(
     state,
-    (path, current, previous) => (render(watchedState, path, current, previous, i18next)),
+    (path, current, previous) => {
+      render(watchedState, path, current, previous, i18next);
+      addLinkClickListener(watchedState);
+    },
   );
+
   // Controller
   addModalListener(watchedState);
   addFormListener(watchedState);
