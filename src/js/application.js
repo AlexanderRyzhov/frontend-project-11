@@ -1,3 +1,5 @@
+/* eslint no-param-reassign: ["error",
+{ "props": true, "ignorePropertyModificationsFor": ["watchedState"] }] */
 import onChange from 'on-change';
 import * as yup from 'yup';
 import i18next from 'i18next';
@@ -41,8 +43,10 @@ const addNewPosts = (posts, state) => {
 };
 
 const httpGet = (url) => {
-  const proxyUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
-  return axios.get(proxyUrl);
+  const urlWithProxy = new URL('/get', 'https://allorigins.hexlet.app');
+  urlWithProxy.searchParams.set('url', url);
+  urlWithProxy.searchParams.set('disableCache', 'true');
+  return axios.get(urlWithProxy);
 };
 
 const checkFeedsUpdate = (state) => {
@@ -79,17 +83,6 @@ const markGuidSeen = (guid, watchedState) => {
   }
 };
 
-/* eslint no-param-reassign:
-["error", { "props": true, "ignorePropertyModificationsFor": ["watchedState"] }] */
-const addModalListener = (watchedState) => {
-  const exampleModal = document.querySelector('#modal');
-  exampleModal.addEventListener('show.bs.modal', (event) => {
-    const button = event.relatedTarget;
-    const guid = button.getAttribute('data-bs-guid');
-    markGuidSeen(guid, watchedState);
-  });
-};
-
 const addLinkClickListener = (watchedState) => {
   const links = document.querySelectorAll('#posts>ul>li>a');
   links.forEach((linkElement) => {
@@ -105,7 +98,7 @@ const addLinkClickListener = (watchedState) => {
 const loadFeed = (watchedState) => {
   watchedState.feedback = i18next.t('forms.isLoading');
   watchedState.status = 'sending';
-  axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(watchedState.data.currentUrl)}`)
+  httpGet(watchedState.data.currentUrl)
     .then((response) => {
       const { feed, posts } = parseFeed(response.data.contents);
       feed.url = watchedState.data.currentUrl;
@@ -118,7 +111,7 @@ const loadFeed = (watchedState) => {
     })
     .catch((error) => {
       switch (error.name) {
-        case 'TypeError':
+        case 'XmlParseError':
           watchedState.feedback = i18next.t('errors.invalidXml');
           break;
         case 'AxiosError':
@@ -129,24 +122,6 @@ const loadFeed = (watchedState) => {
       }
       watchedState.status = 'error';
     });
-};
-
-const addFormListener = (watchedState) => {
-  const form = document.querySelector('form');
-  const inputElement = document.querySelector('input');
-
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    const url = inputElement.value;
-    watchedState.data.currentUrl = url;
-    validate(url, watchedState)
-      .then(() => loadFeed(watchedState))
-      .catch((error) => {
-        [watchedState.feedback] = error.errors;
-        watchedState.status = 'error';
-      });
-  });
 };
 
 const app = () => {
@@ -162,9 +137,28 @@ const app = () => {
   );
 
   // Controller
-  addModalListener(watchedState);
-  addFormListener(watchedState);
-
+  // add show modal listener
+  const exampleModal = document.querySelector('#modal');
+  exampleModal.addEventListener('show.bs.modal', (event) => {
+    const button = event.relatedTarget;
+    const guid = button.getAttribute('data-bs-guid');
+    markGuidSeen(guid, watchedState);
+  });
+  // add form submit listener
+  const form = document.querySelector('form');
+  const inputElement = document.querySelector('input');
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const url = inputElement.value;
+    watchedState.data.currentUrl = url;
+    validate(url, watchedState)
+      .then(() => loadFeed(watchedState))
+      .catch((error) => {
+        [watchedState.feedback] = error.errors;
+        watchedState.status = 'error';
+      });
+  });
+  // set periodical fetch feeds
   const fetchFeeds = () => {
     console.log('checkFeedsUpdate');
     checkFeedsUpdate(watchedState)
