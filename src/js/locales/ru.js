@@ -11,7 +11,7 @@ export default {
       success: 'RSS успешно загружен',
     },
     errors: {
-      xmlParseError: 'Ошибка парсинга xml',
+      xmlParseError: 'Ресурс не содержит валидный RSS',
       network: 'Ошибка сети',
       unexpected: 'Произошла непредвиденная ошибка',
     },
