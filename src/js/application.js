@@ -11,7 +11,8 @@ import render from './view.js';
 import parseFeed from './parsefeed.js';
 
 const init = async () => {
-  i18next.init({
+  const i18nextInstance = i18next.createInstance();
+  return i18nextInstance.init({
     lng: 'ru',
     debug: true,
     resources: {
@@ -20,52 +21,44 @@ const init = async () => {
   }).then(() => {
     yup.setLocale({
       mixed: {
-        required: i18next.t('forms.validation.required'),
-        notOneOf: i18next.t('forms.validation.notUnique'),
+        required: i18nextInstance.t('forms.validation.required'),
+        notOneOf: i18nextInstance.t('forms.validation.notUnique'),
       },
       string: {
-        url: i18next.t('forms.validation.url'),
+        url: i18nextInstance.t('forms.validation.url'),
       },
     });
+    return i18nextInstance;
   });
 };
 
-const validate = async (url, state) => {
-  const urlSchema = yup.string().required().url().notOneOf(state.data.urls);
+const validate = async (url, urls) => {
+  const urlSchema = yup.string().required().url().notOneOf(urls);
   return urlSchema.validate(url, { abortEarly: false });
 };
 
 const addNewPosts = (posts, state) => {
   const newPosts = posts.filter((post) => (_.findIndex(state.data.posts, { guid: post.guid }) < 0));
   if (newPosts.length > 0) {
-    state.data.posts = [...state.data.posts, ...newPosts]; // eslint-disable-line no-param-reassign
+    state.data.posts.push(...newPosts);
   }
 };
 
-const httpGet = (url) => {
+const getUrlWithProxy = (url) => {
   const urlWithProxy = new URL('/get', 'https://allorigins.hexlet.app');
   urlWithProxy.searchParams.set('url', url);
   urlWithProxy.searchParams.set('disableCache', 'true');
-  return axios.get(urlWithProxy);
+  return urlWithProxy.toString();
 };
 
-const checkFeedsUpdate = (state) => {
-  const promises = state.data.feeds
-    .map((feed) => httpGet(feed.url)
-      .then((response) => {
-        const { posts } = parseFeed(response.data.contents);
-        addNewPosts(posts, state);
-      })
-      .catch((error) => {
-        console.log(error);
-      }));
-  return Promise.all(promises);
+const httpGet = (url) => {
+  const urlWithProxy = getUrlWithProxy(url);
+  return axios.get(urlWithProxy);
 };
 
 const buildInitialState = () => {
   const state = {
     data: {
-      currentUrl: '',
       urls: [],
       feeds: [],
       posts: [],
@@ -95,43 +88,42 @@ const addLinkClickListener = (watchedState) => {
   });
 };
 
-const loadFeed = (watchedState) => {
-  watchedState.feedback = i18next.t('forms.isLoading');
+const loadFeed = (url, watchedState, i18nextInstance) => {
+  watchedState.feedback = i18nextInstance.t('forms.isLoading');
   watchedState.status = 'sending';
-  httpGet(watchedState.data.currentUrl)
+  httpGet(url)
     .then((response) => {
       const { feed, posts } = parseFeed(response.data.contents);
-      feed.url = watchedState.data.currentUrl;
+      feed.url = url;
       watchedState.data.urls = [...watchedState.data.urls, feed.url];
       watchedState.data.feeds = [...watchedState.data.feeds, feed];
       addNewPosts(posts, watchedState);
-      watchedState.data.currentUrl = '';
-      watchedState.feedback = i18next.t('forms.success');
+      watchedState.feedback = i18nextInstance.t('forms.success');
       watchedState.status = 'success';
     })
     .catch((error) => {
       switch (error.name) {
         case 'XmlParseError':
-          watchedState.feedback = i18next.t('errors.invalidXml');
+          watchedState.feedback = i18nextInstance.t('errors.xmlParseError');
           break;
         case 'AxiosError':
-          watchedState.feedback = i18next.t('errors.network');
+          watchedState.feedback = i18nextInstance.t('errors.network');
           break;
         default:
-          watchedState.feedback = i18next.t('errors.unexpected');
+          watchedState.feedback = i18nextInstance.t('errors.unexpected');
       }
       watchedState.status = 'error';
     });
 };
 
-const app = () => {
+const app = (i18nextInstance) => {
   // Model
   const state = buildInitialState();
   // View
   const watchedState = onChange(
     state,
     (path, current, previous) => {
-      render(watchedState, path, current, previous, i18next);
+      render(watchedState, path, current, previous, i18nextInstance);
       addLinkClickListener(watchedState);
     },
   );
@@ -148,25 +140,33 @@ const app = () => {
   const form = document.querySelector('form');
   const inputElement = document.querySelector('input');
   form.addEventListener('submit', (event) => {
+    watchedState.status = 'processing';
     event.preventDefault();
     const url = inputElement.value;
-    watchedState.data.currentUrl = url;
-    validate(url, watchedState)
-      .then(() => loadFeed(watchedState))
+    validate(url, watchedState.data.urls)
+      .then(() => loadFeed(url, watchedState, i18nextInstance))
       .catch((error) => {
         [watchedState.feedback] = error.errors;
         watchedState.status = 'error';
       });
   });
   // set periodical fetch feeds
+  const repeatIntervalMs = 5000;
   const fetchFeeds = () => {
-    console.log('checkFeedsUpdate');
-    checkFeedsUpdate(watchedState)
+    const promises = watchedState.data.feeds
+      .map((feed) => httpGet(feed.url)
+        .then((response) => {
+          const { posts } = parseFeed(response.data.contents);
+          addNewPosts(posts, watchedState);
+        }).catch((error) => {
+          console.log(error);
+        }));
+    Promise.all(promises)
       .finally(() => setTimeout(fetchFeeds, 5000));
   };
-  setTimeout(fetchFeeds, 5000);
+  setTimeout(fetchFeeds, repeatIntervalMs);
 };
 
 export default () => {
-  init().then(() => app());
+  init().then((i18nextInstance) => app(i18nextInstance));
 };

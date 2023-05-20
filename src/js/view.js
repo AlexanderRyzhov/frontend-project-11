@@ -67,6 +67,7 @@ const renderStatus = (status, state, ui) => {
   ui.feedback.textContent = state.feedback;
   ui.inputElement.classList.remove('is-invalid');
   switch (status) {
+    case 'processing':
     case 'sending':
       ui.inputElement.setAttribute('readonly', 'true');
       ui.addbuttonElement.setAttribute('disabled', 'true');
@@ -75,9 +76,12 @@ const renderStatus = (status, state, ui) => {
     case 'error':
       ui.inputElement.classList.add('is-invalid');
       ui.feedback.classList.add('text-danger');
-      // fall through
+      ui.inputElement.removeAttribute('readonly');
+      ui.addbuttonElement.removeAttribute('disabled');
+      break;
     case 'success':
       ui.inputElement.removeAttribute('readonly');
+      ui.inputElement.value = '';
       ui.addbuttonElement.removeAttribute('disabled');
       break;
     default:
@@ -102,9 +106,6 @@ const render = (state, path, value, _previous, i18next) => {
   switch (path) {
     case 'feedback':
     case 'data.urls':
-      break;
-    case 'data.currentUrl':
-      ui.inputElement.value = value;
       break;
     case 'data.feeds':
       renderFeeds(value, ui.feedsContainer);
