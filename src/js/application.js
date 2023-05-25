@@ -6,7 +6,8 @@ import i18next from 'i18next';
 import axios from 'axios';
 import * as _ from 'lodash';
 
-import ru from './locales/ru.js';
+import resources from './locales/index.js';
+// eslint-disable-next-line import/no-cycle
 import render from './view.js';
 import parseFeed from './parsefeed.js';
 
@@ -15,9 +16,7 @@ const init = async () => {
   return i18nextInstance.init({
     lng: 'ru',
     debug: true,
-    resources: {
-      ru,
-    },
+    resources,
   }).then(() => {
     yup.setLocale({
       mixed: {
@@ -59,47 +58,31 @@ const httpGet = (url) => {
 const buildInitialState = () => {
   const state = {
     data: {
-      urls: [],
       feeds: [],
       posts: [],
-      seenGuids: [],
     },
     feedback: null,
-    status: '',
+    addFeedStatus: 'ready',
   };
   return state;
 };
 
-const markGuidSeen = (guid, watchedState) => {
-  if (!watchedState.data.seenGuids.includes(guid)) {
-    watchedState.data.seenGuids = [guid, ...watchedState.data.seenGuids];
-  }
-};
-
-const addLinkClickListener = (watchedState) => {
-  const links = document.querySelectorAll('#posts>ul>li>a');
-  links.forEach((linkElement) => {
-    console.log(linkElement);
-    linkElement.addEventListener('click', () => {
-      const button = linkElement.nextSibling;
-      const guid = button.getAttribute('data-bs-guid');
-      markGuidSeen(guid, watchedState);
-    });
-  });
+export const markPostSeen = (guid, watchedState) => {
+  const post = watchedState.data.posts.find((feed) => feed.guid === guid);
+  post.seen = true;
 };
 
 const loadFeed = (url, watchedState, i18nextInstance) => {
   watchedState.feedback = i18nextInstance.t('forms.isLoading');
-  watchedState.status = 'sending';
+  watchedState.addFeedStatus = 'sending';
   httpGet(url)
     .then((response) => {
       const { feed, posts } = parseFeed(response.data.contents);
       feed.url = url;
-      watchedState.data.urls = [...watchedState.data.urls, feed.url];
-      watchedState.data.feeds = [...watchedState.data.feeds, feed];
+      watchedState.data.feeds.push(feed);
       addNewPosts(posts, watchedState);
       watchedState.feedback = i18nextInstance.t('forms.success');
-      watchedState.status = 'success';
+      watchedState.addFeedStatus = 'ready';
     })
     .catch((error) => {
       switch (error.name) {
@@ -112,7 +95,7 @@ const loadFeed = (url, watchedState, i18nextInstance) => {
         default:
           watchedState.feedback = i18nextInstance.t('errors.unexpected');
       }
-      watchedState.status = 'error';
+      watchedState.addFeedStatus = 'error';
     });
 };
 
@@ -124,7 +107,6 @@ const app = (i18nextInstance) => {
     state,
     (path, current, previous) => {
       render(watchedState, path, current, previous, i18nextInstance);
-      addLinkClickListener(watchedState);
     },
   );
 
@@ -134,20 +116,22 @@ const app = (i18nextInstance) => {
   exampleModal.addEventListener('show.bs.modal', (event) => {
     const button = event.relatedTarget;
     const guid = button.getAttribute('data-bs-guid');
-    markGuidSeen(guid, watchedState);
+    watchedState.currentGuid = guid;
+    markPostSeen(guid, watchedState);
   });
   // add form submit listener
   const form = document.querySelector('form');
   const inputElement = document.querySelector('input');
   form.addEventListener('submit', (event) => {
-    watchedState.status = 'processing';
+    watchedState.addFeedStatus = 'processing';
     event.preventDefault();
     const url = inputElement.value;
-    validate(url, watchedState.data.urls)
+    const urls = watchedState.data.feeds.map((feed) => feed.url);
+    validate(url, urls)
       .then(() => loadFeed(url, watchedState, i18nextInstance))
       .catch((error) => {
         [watchedState.feedback] = error.errors;
-        watchedState.status = 'error';
+        watchedState.addFeedStatus = 'error';
       });
   });
   // set periodical fetch feeds

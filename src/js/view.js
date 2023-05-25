@@ -1,4 +1,6 @@
 import * as _ from 'lodash';
+// eslint-disable-next-line import/no-cycle
+import { markPostSeen } from './application.js';
 
 const renderFeeds = (feeds, feedsContainer) => {
   const list = document.createElement('ul');
@@ -15,9 +17,7 @@ const renderFeeds = (feeds, feedsContainer) => {
   feedsContainer.replaceChildren(list);
 };
 
-const renderModal = (guids, state, modal) => {
-  console.log(`data.seenGuids = ${guids}`);
-  const guid = guids[0];
+const renderModal = (guid, state, modal) => {
   const post = _.find(state.data.posts, { guid });
   const modalTitle = modal.querySelector('.modal-title');
   const modalDescription = modal.querySelector('#modalDescription');
@@ -46,13 +46,19 @@ const renderPosts = (state, postsContainer, i18next) => {
     const aElement = document.createElement('a');
     aElement.textContent = post.title;
     aElement.href = post.link;
-    if (state.data.seenGuids.includes(post.guid)) {
+    if (post.seen) {
       aElement.classList.add('fw-normal', 'link-secondary');
     } else {
       aElement.classList.add('fw-bold');
     }
     aElement.setAttribute('target', '_blank');
     const buttonElement = createButton(post, i18next);
+    aElement.addEventListener('click', () => {
+      const { guid } = post;
+      // eslint-disable-next-line no-param-reassign
+      state.currentGuid = guid;
+      markPostSeen(guid, state);
+    });
     liElement.replaceChildren(aElement, buttonElement);
     liElement.classList.add('justify-content-between', 'd-flex', 'list-group-item');
     return liElement;
@@ -61,12 +67,11 @@ const renderPosts = (state, postsContainer, i18next) => {
   postsContainer.replaceChildren(list);
 };
 
-/* eslint no-param-reassign:
-["error", { "props": true, "ignorePropertyModificationsFor": ["ui"] }] */
-const renderStatus = (status, state, ui) => {
+const renderStatus = (addFeedStatus, state, ui) => {
+  // eslint-disable-next-line no-param-reassign
   ui.feedback.textContent = state.feedback;
   ui.inputElement.classList.remove('is-invalid');
-  switch (status) {
+  switch (addFeedStatus) {
     case 'processing':
     case 'sending':
       ui.inputElement.setAttribute('readonly', 'true');
@@ -79,8 +84,9 @@ const renderStatus = (status, state, ui) => {
       ui.inputElement.removeAttribute('readonly');
       ui.addbuttonElement.removeAttribute('disabled');
       break;
-    case 'success':
+    case 'ready':
       ui.inputElement.removeAttribute('readonly');
+      // eslint-disable-next-line no-param-reassign
       ui.inputElement.value = '';
       ui.addbuttonElement.removeAttribute('disabled');
       break;
@@ -105,22 +111,21 @@ const render = (state, path, value, _previous, i18next) => {
   const ui = buildUiRefs();
   switch (path) {
     case 'feedback':
-    case 'data.urls':
       break;
     case 'data.feeds':
       renderFeeds(value, ui.feedsContainer);
       break;
-    case 'data.seenGuids':
+    case 'addFeedStatus':
+      renderStatus(value, state, ui);
+      break;
+    case 'currentGuid':
       renderModal(value, state, ui.modal);
-      // falls through
+    // eslint-disable-next-line no-fallthrough
     case 'data.posts':
       renderPosts(state, ui.postsContainer, i18next);
       break;
-    case 'status':
-      renderStatus(value, state, ui);
-      break;
     default:
-      throw new Error(`unexpected change path: ${path}`);
+      renderPosts(state, ui.postsContainer, i18next);
   }
 };
 

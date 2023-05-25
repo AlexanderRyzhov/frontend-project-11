@@ -10,7 +10,7 @@ const parseFeed = (contents) => {
   const xmlDoc = parser.parseFromString(contents, 'text/xml');
   const errorNode = xmlDoc.querySelector('parsererror');
   if (errorNode) {
-    throw new XmlParseError();
+    throw new XmlParseError(errorNode.textContent);
   }
   const feedTitle = xmlDoc.querySelector('channel > title').textContent;
   const feedDescription = xmlDoc.querySelector('channel > description').textContent;
@@ -26,6 +26,7 @@ const parseFeed = (contents) => {
       description,
       link,
       guid,
+      seen: false,
     };
     return post;
   });
