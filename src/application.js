@@ -6,10 +6,9 @@ import i18next from 'i18next';
 import axios from 'axios';
 import * as _ from 'lodash';
 
-import resources from './locales/index.js';
-// eslint-disable-next-line import/no-cycle
-import render from './view.js';
 import parseFeed from './parsefeed.js';
+import resources from './locales/index.js';
+import render from './view.js';
 
 const init = async () => {
   const i18nextInstance = i18next.createInstance();
