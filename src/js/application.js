@@ -134,6 +134,16 @@ const app = (i18nextInstance) => {
         watchedState.addFeedStatus = 'error';
       });
   });
+  // add link click listener
+  const postsContainer = document.querySelector('#posts');
+  postsContainer.addEventListener('click', (event) => {
+    if (event.target.tagName.toLowerCase() === 'a') {
+      const button = event.target.nextSibling;
+      const guid = button.getAttribute('data-bs-guid');
+      markPostSeen(guid, watchedState);
+    }
+  });
+
   // set periodical fetch feeds
   const repeatIntervalMs = 5000;
   const fetchFeeds = () => {

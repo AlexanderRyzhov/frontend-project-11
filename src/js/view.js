@@ -1,6 +1,4 @@
 import * as _ from 'lodash';
-// eslint-disable-next-line import/no-cycle
-import { markPostSeen } from './application.js';
 
 const renderFeeds = (feeds, feedsContainer) => {
   const list = document.createElement('ul');
@@ -53,12 +51,6 @@ const renderPosts = (state, postsContainer, i18next) => {
     }
     aElement.setAttribute('target', '_blank');
     const buttonElement = createButton(post, i18next);
-    aElement.addEventListener('click', () => {
-      const { guid } = post;
-      // eslint-disable-next-line no-param-reassign
-      state.currentGuid = guid;
-      markPostSeen(guid, state);
-    });
     liElement.replaceChildren(aElement, buttonElement);
     liElement.classList.add('justify-content-between', 'd-flex', 'list-group-item');
     return liElement;
@@ -109,7 +101,9 @@ const buildUiRefs = () => {
 
 const render = (state, path, value, _previous, i18next) => {
   const ui = buildUiRefs();
-  switch (path) {
+  const postsRegex = /data\.posts/;
+  const shortPath = (postsRegex.test(path)) ? 'data.posts' : path;
+  switch (shortPath) {
     case 'feedback':
       break;
     case 'data.feeds':
@@ -120,12 +114,12 @@ const render = (state, path, value, _previous, i18next) => {
       break;
     case 'currentGuid':
       renderModal(value, state, ui.modal);
-    // eslint-disable-next-line no-fallthrough
+      break;
     case 'data.posts':
       renderPosts(state, ui.postsContainer, i18next);
       break;
     default:
-      renderPosts(state, ui.postsContainer, i18next);
+      throw Error('unknown path');
   }
 };
 
