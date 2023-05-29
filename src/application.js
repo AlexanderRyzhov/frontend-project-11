@@ -6,7 +6,7 @@ import i18next from 'i18next';
 import axios from 'axios';
 import * as _ from 'lodash';
 
-import parseFeed from './parsefeed.js';
+import parseFeed from './parseFeed.js';
 import resources from './locales/index.js';
 import render from './view.js';
 
@@ -37,9 +37,7 @@ const validate = async (url, urls) => {
 
 const addNewPosts = (posts, state) => {
   const newPosts = posts.filter((post) => (_.findIndex(state.data.posts, { guid: post.guid }) < 0));
-  if (newPosts.length > 0) {
-    state.data.posts.push(...newPosts);
-  }
+  state.data.posts.push(...newPosts);
 };
 
 const getUrlWithProxy = (url) => {
@@ -49,7 +47,7 @@ const getUrlWithProxy = (url) => {
   return urlWithProxy.toString();
 };
 
-const httpGet = (url) => {
+const getFeeds = (url) => {
   const urlWithProxy = getUrlWithProxy(url);
   return axios.get(urlWithProxy);
 };
@@ -60,39 +58,40 @@ const buildInitialState = () => {
       feeds: [],
       posts: [],
     },
-    feedback: null,
-    addFeedStatus: 'ready',
+    seenGuids: [],
+    currentGuid: null,
+    errorMessage: null,
+    addFeedStatus: 'initial',
   };
   return state;
 };
 
 export const markPostSeen = (guid, watchedState) => {
-  const post = watchedState.data.posts.find((feed) => feed.guid === guid);
-  post.seen = true;
+  if (!watchedState.seenGuids.includes(guid)) {
+    watchedState.seenGuids.push(guid);
+  }
 };
 
 const loadFeed = (url, watchedState, i18nextInstance) => {
-  watchedState.feedback = i18nextInstance.t('forms.isLoading');
   watchedState.addFeedStatus = 'sending';
-  httpGet(url)
+  getFeeds(url)
     .then((response) => {
       const { feed, posts } = parseFeed(response.data.contents);
       feed.url = url;
       watchedState.data.feeds.push(feed);
       addNewPosts(posts, watchedState);
-      watchedState.feedback = i18nextInstance.t('forms.success');
       watchedState.addFeedStatus = 'ready';
     })
     .catch((error) => {
       switch (error.name) {
         case 'XmlParseError':
-          watchedState.feedback = i18nextInstance.t('errors.xmlParseError');
+          watchedState.errorMessage = i18nextInstance.t('errors.xmlParseError');
           break;
         case 'AxiosError':
-          watchedState.feedback = i18nextInstance.t('errors.network');
+          watchedState.errorMessage = i18nextInstance.t('errors.network');
           break;
         default:
-          watchedState.feedback = i18nextInstance.t('errors.unexpected');
+          watchedState.errorMessage = i18nextInstance.t('errors.unexpected');
       }
       watchedState.addFeedStatus = 'error';
     });
@@ -120,16 +119,16 @@ const app = (i18nextInstance) => {
   });
   // add form submit listener
   const form = document.querySelector('form');
-  const inputElement = document.querySelector('input');
   form.addEventListener('submit', (event) => {
     watchedState.addFeedStatus = 'processing';
     event.preventDefault();
-    const url = inputElement.value;
+    const formData = new FormData(form);
+    const url = formData.get('urlInput');
     const urls = watchedState.data.feeds.map((feed) => feed.url);
     validate(url, urls)
       .then(() => loadFeed(url, watchedState, i18nextInstance))
       .catch((error) => {
-        [watchedState.feedback] = error.errors;
+        [watchedState.errorMessage] = error.errors;
         watchedState.addFeedStatus = 'error';
       });
   });
@@ -147,7 +146,7 @@ const app = (i18nextInstance) => {
   const repeatIntervalMs = 5000;
   const fetchFeeds = () => {
     const promises = watchedState.data.feeds
-      .map((feed) => httpGet(feed.url)
+      .map((feed) => getFeeds(feed.url)
         .then((response) => {
           const { posts } = parseFeed(response.data.contents);
           addNewPosts(posts, watchedState);

@@ -1,3 +1,5 @@
+/* eslint no-param-reassign: ["error",
+{ "props": true, "ignorePropertyModificationsFor": ["ui"] }] */
 import * as _ from 'lodash';
 
 const renderFeeds = (feeds, feedsContainer) => {
@@ -11,12 +13,12 @@ const renderFeeds = (feeds, feedsContainer) => {
     liElement.replaceChildren(h3Element, pElement);
     return liElement;
   });
-  list.replaceChildren(...elements);
+  list.append(...elements);
   feedsContainer.replaceChildren(list);
 };
 
-const renderModal = (guid, state, modal) => {
-  const post = _.find(state.data.posts, { guid });
+const renderModal = (state, modal) => {
+  const post = _.find(state.data.posts, { guid: state.currentGuid });
   const modalTitle = modal.querySelector('.modal-title');
   const modalDescription = modal.querySelector('#modalDescription');
   const modalLink = modal.querySelector('#modalLink');
@@ -25,7 +27,7 @@ const renderModal = (guid, state, modal) => {
   modalLink.href = post.link;
 };
 
-const createButton = (post, i18next) => {
+const createViewDetailsButton = (post, i18next) => {
   const button = document.createElement('button');
   button.textContent = i18next.t('forms.viewButton');
   button.classList.add('btn', 'btn-primary', 'btn-sm');
@@ -44,41 +46,41 @@ const renderPosts = (state, postsContainer, i18next) => {
     const aElement = document.createElement('a');
     aElement.textContent = post.title;
     aElement.href = post.link;
-    if (post.seen) {
+    if (state.seenGuids.includes(post.guid)) {
       aElement.classList.add('fw-normal', 'link-secondary');
     } else {
       aElement.classList.add('fw-bold');
     }
     aElement.setAttribute('target', '_blank');
-    const buttonElement = createButton(post, i18next);
+    const buttonElement = createViewDetailsButton(post, i18next);
     liElement.replaceChildren(aElement, buttonElement);
     liElement.classList.add('justify-content-between', 'd-flex', 'list-group-item');
     return liElement;
   });
-  list.replaceChildren(...elements);
+  list.append(...elements);
   postsContainer.replaceChildren(list);
 };
 
-const renderStatus = (addFeedStatus, state, ui) => {
-  // eslint-disable-next-line no-param-reassign
-  ui.feedback.textContent = state.feedback;
+const renderStatus = (addFeedStatus, state, ui, i18next) => {
   ui.inputElement.classList.remove('is-invalid');
   switch (addFeedStatus) {
     case 'processing':
     case 'sending':
+      ui.feedback.textContent = i18next.t('forms.isLoading');
       ui.inputElement.setAttribute('readonly', 'true');
       ui.addbuttonElement.setAttribute('disabled', 'true');
       ui.feedback.classList.remove('text-danger');
       break;
     case 'error':
+      ui.feedback.textContent = state.errorMessage;
       ui.inputElement.classList.add('is-invalid');
       ui.feedback.classList.add('text-danger');
       ui.inputElement.removeAttribute('readonly');
       ui.addbuttonElement.removeAttribute('disabled');
       break;
     case 'ready':
+      ui.feedback.textContent = i18next.t('forms.success');
       ui.inputElement.removeAttribute('readonly');
-      // eslint-disable-next-line no-param-reassign
       ui.inputElement.value = '';
       ui.addbuttonElement.removeAttribute('disabled');
       break;
@@ -104,17 +106,18 @@ const render = (state, path, value, _previous, i18next) => {
   const postsRegex = /data\.posts/;
   const shortPath = (postsRegex.test(path)) ? 'data.posts' : path;
   switch (shortPath) {
-    case 'feedback':
+    case 'errorMessage':
       break;
     case 'data.feeds':
       renderFeeds(value, ui.feedsContainer);
       break;
     case 'addFeedStatus':
-      renderStatus(value, state, ui);
+      renderStatus(value, state, ui, i18next);
       break;
     case 'currentGuid':
-      renderModal(value, state, ui.modal);
+      renderModal(state, ui.modal);
       break;
+    case 'seenGuids':
     case 'data.posts':
       renderPosts(state, ui.postsContainer, i18next);
       break;

@@ -1,5 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.css';
-import * as bootstrap from 'bootstrap'; // eslint-disable-line no-unused-vars
+import 'bootstrap';
 import runApp from './application.js';
 
 runApp();

@@ -7,32 +7,36 @@
   </head>
   <body>
     <main class="flex-grow-1">
-      <section class="container-fluid text-white bg-dark p-5">
-        <h1>RSS-агрегатор</h1>
-        <form data-form="add-feed" method="post">
-          <div class="input-group mb-3">
-            <input
-              id="input"
-              type="text"
-              autofocus
-              requiered
-              class="form-control"
-              placeholder="введите url"
-              aria-label="url"
-            />
-            <button id="addbutton" class="btn btn-primary" type="submit">
-              Добавить
-            </button>
+      <section class="container-fluid bg-dark p-5">
+        <div class="row">
+          <div class="col-md-10 col-lg-8 mx-auto text-white">
+            <h1>RSS-агрегатор</h1>
+            <form data-form="add-feed" method="post">
+              <div class="input-group mb-3">
+                <input
+                  id="input"
+                  name="urlInput"
+                  type="text"
+                  autofocus
+                  requiered
+                  class="form-control"
+                  placeholder="введите url"
+                  aria-label="url"
+                />
+                <button id="addbutton" class="btn btn-primary" type="submit">
+                  Добавить
+                </button>
+              </div>
+              <span>Пример: https://lorem-rss.hexlet.app/feed</span>
+              <div id="feedback" class="text-success"></div>
+            </form>
           </div>
-          <span>Пример: https://lorem-rss.hexlet.app/feed</span>
-          <div id="feedback" class="text-success">
-          </div>
-        </form>
+        </div>
       </section>
       <section class="container-fluid p-5">
         <div class="row">
-          <div id="posts" class="col-md-8 themed-grid-col"></div>
-          <div id="feeds" class="col-md-4 themed-grid-col"></div>
+          <div id="posts" class="col-md-10 col-lg-8 order-1 mx-auto"></div>
+          <div id="feeds" class="col-md-10 col-lg-4 mx-auto order-0 order-lg-1"></div>
         </div>
       </section>
     </main>
@@ -57,7 +61,14 @@
           </div>
           <div class="modal-body" id="modalDescription"></div>
           <div class="modal-footer">
-            <a class="btn btn-primary" role="button" target="_blank" rel="noopener noreferrer" id="modalLink">Читать полностью... </a>
+            <a
+              class="btn btn-primary"
+              role="button"
+              target="_blank"
+              rel="noopener noreferrer"
+              id="modalLink"
+              >Читать полностью...
+            </a>
             <button
               type="button"
               class="btn btn-secondary"

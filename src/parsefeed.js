@@ -26,7 +26,6 @@ const parseFeed = (contents) => {
       description,
       link,
       guid,
-      seen: false,
     };
     return post;
   });
