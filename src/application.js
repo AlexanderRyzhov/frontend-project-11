@@ -6,7 +6,7 @@ import i18next from 'i18next';
 import axios from 'axios';
 import * as _ from 'lodash';
 
-import parseFeed from './parseFeed2.js';
+import parseFeed from './parseFeed.js';
 import resources from './locales/index.js';
 import render from './view.js';
 
