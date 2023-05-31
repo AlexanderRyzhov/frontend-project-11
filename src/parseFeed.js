@@ -1,16 +1,9 @@
-class XmlParseError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'XmlParseError';
-  }
-}
-
 const parseFeed = (contents) => {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(contents, 'text/xml');
   const errorNode = xmlDoc.querySelector('parsererror');
   if (errorNode) {
-    throw new XmlParseError(errorNode.textContent);
+    throw new Error('errors.xmlParseError');
   }
   const feedTitle = xmlDoc.querySelector('channel > title').textContent;
   const feedDescription = xmlDoc.querySelector('channel > description').textContent;

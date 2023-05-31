@@ -44,8 +44,6 @@ const getFeed = (url) => {
   return axios.get(urlWithProxy)
     .catch((error) => {
       switch (error.name) {
-        case 'XmlParseError':
-          throw new Error('errors.xmlParseError');
         case 'AxiosError':
           throw new Error('errors.network');
         default:
