@@ -65,14 +65,13 @@ const renderStatus = (addFeedStatus, state, ui, i18next) => {
   ui.inputElement.classList.remove('is-invalid');
   switch (addFeedStatus) {
     case 'processing':
-    case 'sending':
       ui.feedback.textContent = i18next.t('forms.isLoading');
       ui.inputElement.setAttribute('readonly', 'true');
       ui.addbuttonElement.setAttribute('disabled', 'true');
       ui.feedback.classList.remove('text-danger');
       break;
     case 'error':
-      ui.feedback.textContent = state.errorMessage;
+      ui.feedback.textContent = i18next.t(state.errorMessage);
       ui.inputElement.classList.add('is-invalid');
       ui.feedback.classList.add('text-danger');
       ui.inputElement.removeAttribute('readonly');
@@ -101,11 +100,16 @@ const buildUiRefs = () => {
   return ui;
 };
 
+const checkPostSeen = (guid, postsContainer) => {
+  const button = postsContainer.querySelector(`button[data-bs-guid="${guid}"]`);
+  const link = button.previousSibling;
+  link.classList.add('fw-normal', 'link-secondary');
+  link.classList.remove('fw-bold');
+};
+
 const render = (state, path, value, _previous, i18next) => {
   const ui = buildUiRefs();
-  const postsRegex = /data\.posts/;
-  const shortPath = (postsRegex.test(path)) ? 'data.posts' : path;
-  switch (shortPath) {
+  switch (path) {
     case 'errorMessage':
       break;
     case 'data.feeds':
@@ -116,13 +120,15 @@ const render = (state, path, value, _previous, i18next) => {
       break;
     case 'currentGuid':
       renderModal(state, ui.modal);
+      checkPostSeen(value, ui.postsContainer);
       break;
     case 'seenGuids':
+      break;
     case 'data.posts':
       renderPosts(state, ui.postsContainer, i18next);
       break;
     default:
-      throw Error('unknown path');
+      throw Error(`unknown path: ${path}`);
   }
 };
 

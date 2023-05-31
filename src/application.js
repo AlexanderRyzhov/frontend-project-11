@@ -16,22 +16,14 @@ const init = async () => {
     lng: 'ru',
     debug: true,
     resources,
-  }).then(() => {
-    yup.setLocale({
-      mixed: {
-        required: i18nextInstance.t('forms.validation.required'),
-        notOneOf: i18nextInstance.t('forms.validation.notUnique'),
-      },
-      string: {
-        url: i18nextInstance.t('forms.validation.url'),
-      },
-    });
-    return i18nextInstance;
-  });
+  }).then(() => i18nextInstance);
 };
 
 const validate = async (url, urls) => {
-  const urlSchema = yup.string().required().url().notOneOf(urls);
+  const urlSchema = yup.string()
+    .required('forms.validation.required')
+    .url('forms.validation.url')
+    .notOneOf(urls, 'forms.validation.notUnique');
   return urlSchema.validate(url, { abortEarly: false });
 };
 
@@ -47,9 +39,19 @@ const getUrlWithProxy = (url) => {
   return urlWithProxy.toString();
 };
 
-const getFeeds = (url) => {
+const getFeed = (url) => {
   const urlWithProxy = getUrlWithProxy(url);
-  return axios.get(urlWithProxy);
+  return axios.get(urlWithProxy)
+    .catch((error) => {
+      switch (error.name) {
+        case 'XmlParseError':
+          throw new Error('errors.xmlParseError');
+        case 'AxiosError':
+          throw new Error('errors.network');
+        default:
+          throw new Error('errors.unexpected');
+      }
+    });
 };
 
 const buildInitialState = () => {
@@ -61,40 +63,15 @@ const buildInitialState = () => {
     seenGuids: [],
     currentGuid: null,
     errorMessage: null,
-    addFeedStatus: 'initial',
+    addFeedStatus: 'ready',
   };
   return state;
 };
 
-export const markPostSeen = (guid, watchedState) => {
+const markPostSeen = (guid, watchedState) => {
   if (!watchedState.seenGuids.includes(guid)) {
     watchedState.seenGuids.push(guid);
   }
-};
-
-const loadFeed = (url, watchedState, i18nextInstance) => {
-  watchedState.addFeedStatus = 'sending';
-  getFeeds(url)
-    .then((response) => {
-      const { feed, posts } = parseFeed(response.data.contents);
-      feed.url = url;
-      watchedState.data.feeds.push(feed);
-      addNewPosts(posts, watchedState);
-      watchedState.addFeedStatus = 'ready';
-    })
-    .catch((error) => {
-      switch (error.name) {
-        case 'XmlParseError':
-          watchedState.errorMessage = i18nextInstance.t('errors.xmlParseError');
-          break;
-        case 'AxiosError':
-          watchedState.errorMessage = i18nextInstance.t('errors.network');
-          break;
-        default:
-          watchedState.errorMessage = i18nextInstance.t('errors.unexpected');
-      }
-      watchedState.addFeedStatus = 'error';
-    });
 };
 
 const app = (i18nextInstance) => {
@@ -126,9 +103,20 @@ const app = (i18nextInstance) => {
     const url = formData.get('urlInput');
     const urls = watchedState.data.feeds.map((feed) => feed.url);
     validate(url, urls)
-      .then(() => loadFeed(url, watchedState, i18nextInstance))
-      .catch((error) => {
-        [watchedState.errorMessage] = error.errors;
+      .then(() => {
+        getFeed(url).then((response) => {
+          const { feed, posts } = parseFeed(response.data.contents);
+          feed.url = url;
+          watchedState.data.feeds.push(feed);
+          addNewPosts(posts, watchedState);
+          watchedState.addFeedStatus = 'ready';
+        }).catch((error) => {
+          watchedState.errorMessage = error.message;
+          watchedState.addFeedStatus = 'error';
+        });
+      })
+      .catch((validationError) => {
+        [watchedState.errorMessage] = validationError.errors;
         watchedState.addFeedStatus = 'error';
       });
   });
@@ -146,7 +134,7 @@ const app = (i18nextInstance) => {
   const repeatIntervalMs = 5000;
   const fetchFeeds = () => {
     const promises = watchedState.data.feeds
-      .map((feed) => getFeeds(feed.url)
+      .map((feed) => getFeed(feed.url)
         .then((response) => {
           const { posts } = parseFeed(response.data.contents);
           addNewPosts(posts, watchedState);
@@ -154,7 +142,7 @@ const app = (i18nextInstance) => {
           console.log(error);
         }));
     Promise.all(promises)
-      .finally(() => setTimeout(fetchFeeds, 5000));
+      .finally(() => setTimeout(fetchFeeds, repeatIntervalMs));
   };
   setTimeout(fetchFeeds, repeatIntervalMs);
 };
